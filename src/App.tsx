@@ -1,4 +1,10 @@
 import { useEffect, useState } from "react";
+import {
+  getTasks,
+  createTask,
+  updateTask,
+  deleteTask
+} from "./api/tasks";
 import type { Task } from "../types";
 
 function App() {
@@ -8,58 +14,45 @@ function App() {
     name: "",
     completed: false,
     status: "pending",
+    editMode: false
   });
 
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: "1",
-      name: "Sample Task",
-      completed: false,
-      status: "pending",
-    },
-    {
-      id: "2",
-      name: "Another Task",
-      completed: false,
-      status: "in-progress",
-    },
-    {
-      id: "3",
-      name: "Completed Task",
-      completed: true,
-      status: "completed",
-    },
-  ]);
+  const [tasks, setTasks] = useState<Task[]>([]);
 
   // 2. Fetch data
-  useEffect(() => {});
+   useEffect(() => {
+    getTasks().then(setTasks);
+  }, []);
 
   // 3. Functions
-  function addTask(taskName: string) {
-    const newTask: Task = {
-      id: Date.now().toString(),
-      name: taskName,
-      completed: false,
-      status: "pending",
-    };
+  async function handleCreate(taskName: string) {
+    const task = await createTask(taskName);
 
-    setTasks([...tasks, newTask]);
-    setTask({ ...task, name: "" });
+    setTasks([...tasks, task]); // update FE
+    setTask({ ...task, name: "" }); // reset input field
   }
 
-  function deleteTask(taskId: string) {
-    const updatedTasks = tasks.filter((task) => task.id !== taskId);
-    setTasks(updatedTasks);
-  }
+  async function handleEdit(taskId: string, updatedTask: Partial<Task>) {
+    await updateTask(taskId, {
+      editMode: updatedTask.editMode
+    });
 
-  function editTask(taskId: string, updatedTask: Partial<Task>) {
     const updatedTasks = tasks.map((task) => {
       if (task.id === taskId) {
         return { ...task, ...updatedTask };
       }
       return task;
     });
+
     setTasks(updatedTasks);
+  }
+
+  async function handleDelete(taskId: string) {
+    await deleteTask(taskId);
+
+    setTasks((currentTasks) =>
+      currentTasks.filter((task) => task.id !== taskId)
+    );
   }
 
   // 4.JSX
@@ -78,7 +71,7 @@ function App() {
         />
         <button
           className="ml-2 p-2 bg-blue-500 text-white rounded"
-          onClick={() => addTask(task.name)}
+          onClick={() => handleCreate(task.name)}
         >
           Add Task
         </button>
@@ -90,14 +83,15 @@ function App() {
           {tasks.map((task) => (
             <li key={task.id} className="mt-4 p-4 bg-white rounded shadow">
               {task.editMode && (
-              <input
-                key={task.id}
-                type="text"
-                value={task.name}
-                onChange={(e) => editTask(task.id, { name: e.target.value })}
-                onSubmit={() => editTask(task.id, { editMode: false })}
-                className="mt-2 p-2 border rounded"
-              />)}
+                <input
+                  key={task.id}
+                  type="text"
+                  value={task.name}
+                  onChange={(e) => handleEdit(task.id, { name: e.target.value, editMode: true })}
+                  onSubmit={() => handleEdit(task.id, { editMode: false })}
+                  className="mt-2 p-2 border rounded"
+                />
+              )}
 
               {!task.editMode && (
                 <h2 className="text-xl font-semibold text-gray-800">
@@ -113,7 +107,7 @@ function App() {
               <button
                 className="mt-2 mr-2 p-2 bg-yellow-400 text-white rounded"
                 onClick={() => {
-                  editTask(task.id, { editMode: !task.editMode });
+                  handleEdit(task.id, { editMode: !task.editMode });
                 }}
               >
                 {task.editMode ? "Save Changes" : "Edit Task"}
@@ -121,11 +115,10 @@ function App() {
 
               <button
                 className="mt-2 p-2 bg-red-500 text-white rounded"
-                onClick={() => deleteTask(task.id)}
+                onClick={() => handleDelete(task.id)}
               >
                 Delete Task
               </button>
-              
             </li>
           ))}
         </ul>

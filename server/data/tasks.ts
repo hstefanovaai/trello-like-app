@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 
-type Task = {
+export type Task = {
   id: string;
   name: string;
   completed: boolean;

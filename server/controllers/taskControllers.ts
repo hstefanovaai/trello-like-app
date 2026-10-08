@@ -1,13 +1,14 @@
 import { Request, Response } from "express";
 import tasks from "../data/tasks";
 import { v4 as uuidv4 } from "uuid";
+import { Task } from "../data/tasks";
 
 export const getTasks = (req: Request, res: Response) => {
   res.json(tasks);
 };
 
 export const createTask = (req: Request, res: Response) => {
-  const newTask = {
+  const newTask: Task = {
     id: uuidv4(),
     name: req.body.name,
     completed: false,
@@ -17,7 +18,7 @@ export const createTask = (req: Request, res: Response) => {
 
   tasks.push(newTask);
   res.status(201).json(newTask);
-}
+};
 
 export const updateTask = (req: Request, res: Response) => {
   const id = req.body.id;
@@ -30,8 +31,8 @@ export const updateTask = (req: Request, res: Response) => {
   task.name = req.body.name;
   task.completed = req.body.completed;
 
-  res.json(task);
-}
+  res.status(200).json(task);
+};
 
 export const deleteTask = (req: Request, res: Response) => {
   const id = req.params.id;
@@ -43,5 +44,5 @@ export const deleteTask = (req: Request, res: Response) => {
   }
 
   const updatedTasks = tasks.filter((task) => task.id !== id);
-  res.json(updatedTasks);
-}
+  res.status(200).json(updatedTasks);
+};
